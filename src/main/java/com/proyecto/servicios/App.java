@@ -1,7 +1,7 @@
 package com.proyecto.servicios;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -13,18 +13,18 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
-
-
 @SpringBootApplication
 @EnableScheduling
 @EnableFeignClients
-@Slf4j
-
 public class App implements CommandLineRunner {
 
-    @Autowired
-    private ApplicationContext context;
+    private static final Logger log = LoggerFactory.getLogger(App.class);
 
+    private final ApplicationContext context;
+
+    public App(ApplicationContext context) {
+        this.context = context;
+    }
 
     public static void main(String[] args) {
         SpringApplication.run(App.class, args);
@@ -32,18 +32,24 @@ public class App implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        //	displayInfo(context.getBean(BuildProperties.class));
+        try {
+            BuildProperties buildProperties = context.getBean(BuildProperties.class);
+            displayInfo(buildProperties);
+        } catch (Exception e) {
+            log.info("Servicio iniciado correctamente sin BuildProperties.");
+        }
     }
 
     private static void displayInfo(BuildProperties buildProperties) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
-        String out = formatter.format(buildProperties.getTime());
-        log.info("Nombre artefacto: " + buildProperties.getName() + "\n"
-                + "Versión: " + buildProperties.getVersion() + "\n"
-                + "Fecha Compilación: " + out + "\n"
-                + "Artefacto: " + buildProperties.getArtifact() + "\n"
-                + "Grupo: " + buildProperties.getGroup());
-
-
+        if (buildProperties != null && buildProperties.getTime() != null) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault());
+            String out = formatter.format(buildProperties.getTime());
+            log.info("Nombre artefacto: {}\nVersión: {}\nFecha Compilación: {}\nArtefacto: {}\nGrupo: {}",
+                    buildProperties.getName(),
+                    buildProperties.getVersion(),
+                    out,
+                    buildProperties.getArtifact(),
+                    buildProperties.getGroup());
+        }
     }
 }

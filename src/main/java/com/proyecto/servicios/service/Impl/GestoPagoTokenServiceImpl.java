@@ -6,7 +6,8 @@ import com.proyecto.servicios.mapper.GestoPagoTokenMapper;
 import com.proyecto.servicios.model.gestopago.GestoPagoAuthResponse;
 import com.proyecto.servicios.repositorys.gestopago.GestoPagoTokenRepository;
 import com.proyecto.servicios.service.GestoPagoTokenService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -14,20 +15,21 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-@Slf4j
 public class GestoPagoTokenServiceImpl implements GestoPagoTokenService {
+
+    private static final Logger log = LoggerFactory.getLogger(GestoPagoTokenServiceImpl.class);
 
     private final GestoPagoAuthClient gestoPagoAuthClient;
     private final GestoPagoTokenRepository tokenRepository;
     private final GestoPagoTokenMapper tokenMapper;
 
-    @Value("${gestopago.auth.id-distribuidor}")
+    @Value("${gestopago.auth.id-distribuidor:0}")
     private Integer idDistribuidor;
 
-    @Value("${gestopago.auth.codigo-dispositivo}")
+    @Value("${gestopago.auth.codigo-dispositivo:}")
     private String codigoDispositivo;
 
-    @Value("${gestopago.auth.password}")
+    @Value("${gestopago.auth.password:}")
     private String password;
 
     public GestoPagoTokenServiceImpl(GestoPagoAuthClient gestoPagoAuthClient,

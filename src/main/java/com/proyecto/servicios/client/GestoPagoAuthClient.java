@@ -5,10 +5,10 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = "gestoPagoAuth", url = "${gestopago.auth.url}")
+@FeignClient(name = "gestoPagoAuth", url = "${gestopago.api.base-url}")
 public interface GestoPagoAuthClient {
 
-    @PostMapping("/sistema/app/jwt-gp/authenticate/")
+    @PostMapping("${gestopago.endpoints.auth:/sistema/app/jwt-gp/authenticate/}")
     GestoPagoAuthResponse authenticate(
             @RequestParam("idDistribuidor") Integer idDistribuidor,
             @RequestParam("codigoDispositivo") String codigoDispositivo,

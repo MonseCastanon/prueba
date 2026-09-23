@@ -1,15 +1,11 @@
 package com.proyecto.servicios.entity.gestopago;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "gestopago_tokens")
-@Getter
-@Setter
 public class GestoPagoToken {
 
     @Id
@@ -40,6 +36,9 @@ public class GestoPagoToken {
     @Column(name = "activo", nullable = false)
     private Boolean activo = true;
 
+    public GestoPagoToken() {
+    }
+
     @PrePersist
     void onCreate() {
         fechaCreacion = LocalDateTime.now();
@@ -49,5 +48,77 @@ public class GestoPagoToken {
     @PreUpdate
     void onUpdate() {
         fechaActualizacion = LocalDateTime.now();
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public Integer getIdDistribuidor() {
+        return idDistribuidor;
+    }
+
+    public void setIdDistribuidor(Integer idDistribuidor) {
+        this.idDistribuidor = idDistribuidor;
+    }
+
+    public String getCodigoDispositivo() {
+        return codigoDispositivo;
+    }
+
+    public void setCodigoDispositivo(String codigoDispositivo) {
+        this.codigoDispositivo = codigoDispositivo;
+    }
+
+    public String getToken() {
+        return token;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public String getTokenType() {
+        return tokenType;
+    }
+
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
+    }
+
+    public Long getExpiresIn() {
+        return expiresIn;
+    }
+
+    public void setExpiresIn(Long expiresIn) {
+        this.expiresIn = expiresIn;
+    }
+
+    public LocalDateTime getFechaCreacion() {
+        return fechaCreacion;
+    }
+
+    public void setFechaCreacion(LocalDateTime fechaCreacion) {
+        this.fechaCreacion = fechaCreacion;
+    }
+
+    public LocalDateTime getFechaActualizacion() {
+        return fechaActualizacion;
+    }
+
+    public void setFechaActualizacion(LocalDateTime fechaActualizacion) {
+        this.fechaActualizacion = fechaActualizacion;
+    }
+
+    public Boolean getActivo() {
+        return activo;
+    }
+
+    public void setActivo(Boolean activo) {
+        this.activo = activo;
     }
 }
