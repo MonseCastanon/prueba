@@ -24,6 +24,7 @@ public class CatProductoDocument {
     private String precio;
     private Boolean hasDigitoVerificador;
     private Boolean showAyuda;
+    private String legend;
     private Boolean activo;
     private LocalDateTime fechaActualizacion;
 
@@ -32,7 +33,7 @@ public class CatProductoDocument {
 
     public CatProductoDocument(String id, Integer idProducto, String producto, Integer idServicio, String servicio,
                                Integer idCatTipoServicio, Integer tipoFront, String tipoReferencia, String precio,
-                               Boolean hasDigitoVerificador, Boolean showAyuda, Boolean activo, LocalDateTime fechaActualizacion) {
+                               Boolean hasDigitoVerificador, Boolean showAyuda, String legend, Boolean activo, LocalDateTime fechaActualizacion) {
         this.id = id;
         this.idProducto = idProducto;
         this.producto = producto;
@@ -44,6 +45,7 @@ public class CatProductoDocument {
         this.precio = precio;
         this.hasDigitoVerificador = hasDigitoVerificador;
         this.showAyuda = showAyuda;
+        this.legend = legend;
         this.activo = activo;
         this.fechaActualizacion = fechaActualizacion;
     }
@@ -64,6 +66,7 @@ public class CatProductoDocument {
         private String precio;
         private Boolean hasDigitoVerificador;
         private Boolean showAyuda;
+        private String legend;
         private Boolean activo;
         private LocalDateTime fechaActualizacion;
 
@@ -122,6 +125,11 @@ public class CatProductoDocument {
             return this;
         }
 
+        public Builder legend(String legend) {
+            this.legend = legend;
+            return this;
+        }
+
         public Builder activo(Boolean activo) {
             this.activo = activo;
             return this;
@@ -134,8 +142,7 @@ public class CatProductoDocument {
 
         public CatProductoDocument build() {
             return new CatProductoDocument(id, idProducto, producto, idServicio, servicio,
-                    idCatTipoServicio, tipoFront, tipoReferencia, precio,
-                    hasDigitoVerificador, showAyuda, activo, fechaActualizacion);
+                    idCatTipoServicio, tipoFront, tipoReferencia, precio, hasDigitoVerificador, showAyuda, legend, activo, fechaActualizacion);
         }
     }
 
@@ -225,6 +232,14 @@ public class CatProductoDocument {
 
     public void setShowAyuda(Boolean showAyuda) {
         this.showAyuda = showAyuda;
+    }
+
+    public String getLegend() {
+        return legend;
+    }
+
+    public void setLegend(String legend) {
+        this.legend = legend;
     }
 
     public Boolean getActivo() {

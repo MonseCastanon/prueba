@@ -2,6 +2,7 @@ package com.proyecto.servicios.model.gestopago.xml;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
@@ -9,35 +10,38 @@ import jakarta.xml.bind.annotation.XmlRootElement;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class ProductItemXmlDto {
 
-    @XmlElement(name = "idProducto")
+    @XmlAttribute(name = "idProducto")
     private Integer idProducto;
 
-    @XmlElement(name = "producto")
+    @XmlAttribute(name = "producto")
     private String producto;
 
-    @XmlElement(name = "idServicio")
+    @XmlAttribute(name = "idServicio")
     private Integer idServicio;
 
-    @XmlElement(name = "servicio")
+    @XmlAttribute(name = "servicio")
     private String servicio;
 
-    @XmlElement(name = "idCatTipoServicio")
+    @XmlAttribute(name = "idCatTipoServicio")
     private Integer idCatTipoServicio;
 
-    @XmlElement(name = "tipoFront")
+    @XmlAttribute(name = "tipoFront")
     private Integer tipoFront;
 
-    @XmlElement(name = "tipoReferencia")
+    @XmlAttribute(name = "tipoReferencia")
     private String tipoReferencia;
 
-    @XmlElement(name = "precio")
+    @XmlAttribute(name = "precio")
     private String precio;
 
-    @XmlElement(name = "hasDigitoVerificador")
+    @XmlAttribute(name = "hasDigitoVerificador")
     private Boolean hasDigitoVerificador;
 
-    @XmlElement(name = "showAyuda")
+    @XmlAttribute(name = "showAyuda")
     private Boolean showAyuda;
+
+    @XmlElement(name = "legend")
+    private String legend;
 
     public ProductItemXmlDto() {
     }
@@ -120,5 +124,13 @@ public class ProductItemXmlDto {
 
     public void setShowAyuda(Boolean showAyuda) {
         this.showAyuda = showAyuda;
+    }
+
+    public String getLegend() {
+        return legend;
+    }
+
+    public void setLegend(String legend) {
+        this.legend = legend;
     }
 }

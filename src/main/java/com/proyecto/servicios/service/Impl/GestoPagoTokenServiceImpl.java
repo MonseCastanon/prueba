@@ -11,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import java.util.Optional;
 
@@ -23,13 +25,13 @@ public class GestoPagoTokenServiceImpl implements GestoPagoTokenService {
     private final GestoPagoTokenRepository tokenRepository;
     private final GestoPagoTokenMapper tokenMapper;
 
-    @Value("${gestopago.auth.id-distribuidor:0}")
+    @Value("${gestopago.auth.id-distribuidor:83}")
     private Integer idDistribuidor;
 
-    @Value("${gestopago.auth.codigo-dispositivo:}")
+    @Value("${gestopago.auth.codigo-dispositivo:GPS83-TPV-17}")
     private String codigoDispositivo;
 
-    @Value("${gestopago.auth.password:}")
+    @Value("${gestopago.auth.password:12345678}")
     private String password;
 
     public GestoPagoTokenServiceImpl(GestoPagoAuthClient gestoPagoAuthClient,
@@ -43,10 +45,14 @@ public class GestoPagoTokenServiceImpl implements GestoPagoTokenService {
     @Override
     @Scheduled(fixedRateString = "${gestopago.auth.refresh-rate-ms:3600000}", initialDelay = 0)
     public void renovarToken() {
-        log.info("Renovando token GestoPago para distribuidor={}", idDistribuidor);
+        log.info("Renovando token GestoPago para distribuidor={}, dispositivo={}", idDistribuidor, codigoDispositivo);
         try {
-            GestoPagoAuthResponse response = gestoPagoAuthClient.authenticate(
-                    idDistribuidor, codigoDispositivo, password);
+            MultiValueMap<String, String> formParams = new LinkedMultiValueMap<>();
+            formParams.add("idDistribuidor", String.valueOf(idDistribuidor));
+            formParams.add("codigoDispositivo", codigoDispositivo);
+            formParams.add("password", password);
+
+            GestoPagoAuthResponse response = gestoPagoAuthClient.authenticate(formParams);
 
             if (response == null || response.getToken() == null) {
                 log.error("La respuesta de GestoPago no contiene token");
@@ -68,7 +74,7 @@ public class GestoPagoTokenServiceImpl implements GestoPagoTokenService {
                     });
 
             tokenRepository.save(tokenEntity);
-            log.info("Token GestoPago renovado correctamente");
+            log.info("Token GestoPago renovado correctamente: {}", tokenEntity.getToken().substring(0, Math.min(20, tokenEntity.getToken().length())) + "...");
 
         } catch (Exception e) {
             log.error("Error al renovar token GestoPago: {}", e.getMessage(), e);
@@ -77,6 +83,12 @@ public class GestoPagoTokenServiceImpl implements GestoPagoTokenService {
 
     @Override
     public Optional<GestoPagoToken> obtenerTokenActivo(Integer idDistribuidor, String codigoDispositivo) {
-        return tokenRepository.findByIdDistribuidorAndCodigoDispositivo(idDistribuidor, codigoDispositivo);
+        Optional<GestoPagoToken> tokenOpt = tokenRepository.findByIdDistribuidorAndCodigoDispositivo(idDistribuidor, codigoDispositivo);
+        if (tokenOpt.isEmpty() || tokenOpt.get().getToken() == null) {
+            log.info("No se encontró token en BD, intentando renovar inmediatamente...");
+            renovarToken();
+            return tokenRepository.findByIdDistribuidorAndCodigoDispositivo(idDistribuidor, codigoDispositivo);
+        }
+        return tokenOpt;
     }
 }
