@@ -5,18 +5,17 @@ import com.proyecto.servicios.service.ClienteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.OffsetDateTime;
+import java.util.Collections;
 import java.util.List;
 
 @RestController
 @RequestMapping("/clientes")
-@Tag(name = "Clientes", description = "Onboarding bancario, búsquedas multicriterio, actualización y baja lógica")
+@Tag(name = "Clientes", description = "Onboarding bancario, búsquedas multicriterio, actualización y baja lógica sin PathVariables ni RequestParams")
 public class ClienteController {
 
     private final ClienteService clienteService;
@@ -27,79 +26,66 @@ public class ClienteController {
 
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Registrar nuevo cliente físico (Onboarding completo con cuenta y usuario)")
-    public ResponseEntity<ClienteResponse> registrarCliente(@Valid @RequestBody ClienteRegistroRequest request) {
-        return new ResponseEntity<>(clienteService.registrarCliente(request), HttpStatus.CREATED);
+    public ResponseEntity<ApiResponse<ClienteResponse>> registrarCliente(@Valid @RequestBody ClienteRegistroRequest request) {
+        ClienteResponse cliente = clienteService.registrarCliente(request);
+        return new ResponseEntity<>(ApiResponse.exito(HttpStatus.CREATED.value(), "Cliente registrado exitosamente", cliente), HttpStatus.CREATED);
     }
 
-    @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Consultar clientes con filtros multicriterio (Nombre, Apellido Paterno, Apellido Materno, CURP, Activo)")
-    public ResponseEntity<List<ClienteResponse>> consultarClientes(
-            @RequestParam(required = false) String nombre,
-            @RequestParam(required = false) String apellidoPaterno,
-            @RequestParam(required = false) String apellidoMaterno,
-            @RequestParam(required = false) String curp,
-            @RequestParam(required = false) Boolean activo
-    ) {
-        if (nombre != null || apellidoPaterno != null || apellidoMaterno != null || curp != null || activo != null) {
-            return ResponseEntity.ok(clienteService.buscarPorFiltros(nombre, apellidoPaterno, apellidoMaterno, curp, activo));
+    @PostMapping(value = "/consulta", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Consultar clientes con filtros multicriterio dinámicos vía RequestBody (Nombre, Apellidos, CURP, RFC, Cuenta, Fechas)")
+    public ResponseEntity<ApiResponse<List<ClienteResponse>>> consultarClientes(@Valid @RequestBody(required = false) ClienteBusquedaRequest request) {
+        if (request == null) {
+            return ResponseEntity.ok(ApiResponse.exito("Consulta ejecutada exitosamente", clienteService.consultarTodos()));
         }
-        return ResponseEntity.ok(clienteService.consultarTodos());
+
+        if (request.getCurp() != null && !request.getCurp().isBlank()) {
+            return ResponseEntity.ok(ApiResponse.exito("Cliente consultado por CURP",
+                    List.of(clienteService.consultarPorCurp(request.getCurp()))));
+        }
+
+        if (request.getRfc() != null && !request.getRfc().isBlank()) {
+            return ResponseEntity.ok(ApiResponse.exito("Cliente consultado por RFC",
+                    List.of(clienteService.consultarPorRfc(request.getRfc()))));
+        }
+
+        if (request.getNumeroCuenta() != null && !request.getNumeroCuenta().isBlank()) {
+            return ResponseEntity.ok(ApiResponse.exito("Cliente consultado por número de cuenta",
+                    List.of(clienteService.consultarPorNumeroCuenta(request.getNumeroCuenta()))));
+        }
+
+        if (request.getFechaInicio() != null && request.getFechaFin() != null) {
+            return ResponseEntity.ok(ApiResponse.exito("Clientes consultados por rango de fechas",
+                    clienteService.buscarPorRangoFechas(request.getFechaInicio(), request.getFechaFin())));
+        }
+
+        if (request.getNombre() != null || request.getApellidoPaterno() != null
+                || request.getApellidoMaterno() != null || request.getActivo() != null) {
+            return ResponseEntity.ok(ApiResponse.exito("Clientes consultados por filtros multicriterio",
+                    clienteService.buscarPorFiltros(request.getNombre(), request.getApellidoPaterno(),
+                            request.getApellidoMaterno(), request.getCurp(), request.getActivo())));
+        }
+
+        return ResponseEntity.ok(ApiResponse.exito("Consulta ejecutada exitosamente", clienteService.consultarTodos()));
     }
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Consultar cliente por ID")
-    public ResponseEntity<ClienteResponse> consultarPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(clienteService.consultarPorId(id));
+    @PutMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Actualización completa (PUT) de datos permitidos recibiendo el ID en el body")
+    public ResponseEntity<ApiResponse<ClienteResponse>> actualizarCliente(@Valid @RequestBody ClienteActualizaRequest request) {
+        ClienteResponse actualizado = clienteService.actualizarCliente(request.getId(), request);
+        return ResponseEntity.ok(ApiResponse.exito("Cliente actualizado exitosamente", actualizado));
     }
 
-    @GetMapping("/curp/{curp}")
-    @Operation(summary = "Consultar cliente por CURP")
-    public ResponseEntity<ClienteResponse> consultarPorCurp(@PathVariable String curp) {
-        return ResponseEntity.ok(clienteService.consultarPorCurp(curp));
+    @PatchMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Actualización parcial (PATCH) de datos permitidos recibiendo el ID en el body")
+    public ResponseEntity<ApiResponse<ClienteResponse>> patchCliente(@Valid @RequestBody ClientePatchRequest request) {
+        ClienteResponse actualizado = clienteService.patchCliente(request.getId(), request);
+        return ResponseEntity.ok(ApiResponse.exito("Cliente actualizado parcialmente con éxito", actualizado));
     }
 
-    @GetMapping("/rfc/{rfc}")
-    @Operation(summary = "Consultar cliente por RFC")
-    public ResponseEntity<ClienteResponse> consultarPorRfc(@PathVariable String rfc) {
-        return ResponseEntity.ok(clienteService.consultarPorRfc(rfc));
-    }
-
-    @GetMapping("/cuenta/{numeroCuenta}")
-    @Operation(summary = "Consultar cliente titular por número de cuenta bancaria")
-    public ResponseEntity<ClienteResponse> consultarPorNumeroCuenta(@PathVariable String numeroCuenta) {
-        return ResponseEntity.ok(clienteService.consultarPorNumeroCuenta(numeroCuenta));
-    }
-
-    @GetMapping("/rango-fechas")
-    @Operation(summary = "Consultar clientes creados en un rango de fechas")
-    public ResponseEntity<List<ClienteResponse>> consultarPorFechas(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaInicio,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fechaFin
-    ) {
-        return ResponseEntity.ok(clienteService.buscarPorRangoFechas(fechaInicio, fechaFin));
-    }
-
-    @PutMapping("/{id}")
-    @Operation(summary = "Actualización completa (PUT) de datos permitidos")
-    public ResponseEntity<ClienteResponse> actualizarCliente(
-            @PathVariable Long id,
-            @Valid @RequestBody ClienteActualizaRequest request
-    ) {
-        return ResponseEntity.ok(clienteService.actualizarCliente(id, request));
-    }
-
-    @PatchMapping("/{id}")
-    @Operation(summary = "Actualización parcial (PATCH) de datos permitidos")
-    public ResponseEntity<ClienteResponse> patchCliente(
-            @PathVariable Long id,
-            @Valid @RequestBody ClientePatchRequest request
-    ) {
-        return ResponseEntity.ok(clienteService.patchCliente(id, request));
-    }
-
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Baja lógica de cliente (desactiva cliente, usuario y cancela cuentas)")
-    public ResponseEntity<GenericResponse> bajaLogica(@PathVariable Long id) {
-        return ResponseEntity.ok(clienteService.bajaLogicaCliente(id));
+    @PostMapping(value = "/baja", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @Operation(summary = "Baja lógica de cliente (POST) (desactiva cliente, usuario y cancela cuentas) vía RequestBody")
+    public ResponseEntity<ApiResponse<GenericResponse>> bajaLogica(@Valid @RequestBody ClienteBajaRequest request) {
+        GenericResponse respuesta = clienteService.bajaLogicaCliente(request.getId());
+        return ResponseEntity.ok(ApiResponse.exito("Baja lógica de cliente procesada exitosamente", respuesta));
     }
 }

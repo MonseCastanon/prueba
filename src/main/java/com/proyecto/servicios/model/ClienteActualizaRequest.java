@@ -15,6 +15,9 @@ import java.time.LocalDate;
 @Builder
 public class ClienteActualizaRequest {
 
+    @NotNull(message = "El ID del cliente es obligatorio")
+    private Long id;
+
     @NotBlank(message = "El nombre es obligatorio")
     @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+( [a-zA-ZáéíóúÁÉÍÓÚñÑ]+)*$")
     @Size(min = 2, max = 50)
