@@ -19,8 +19,6 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
-
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleNotFound(ResourceNotFoundException ex) {
         log.warn("Recurso no encontrado: {}", ex.getMessage());
@@ -67,10 +65,22 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, "Los datos enviados no cumplen con las validaciones requeridas", errors);
     }
 
+    @ExceptionHandler(org.springframework.web.method.annotation.HandlerMethodValidationException.class)
+    public ResponseEntity<Map<String, Object>> handleHandlerMethodValidation(org.springframework.web.method.annotation.HandlerMethodValidationException ex) {
+        log.warn("Error de validación en parámetros del controlador: {}", ex.getMessage());
+        return buildResponse(HttpStatus.BAD_REQUEST, "Los datos enviados no cumplen con las validaciones requeridas", null);
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgument(IllegalArgumentException ex) {
         log.warn("Argumento inválido: {}", ex.getMessage());
         return buildResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(org.springframework.web.HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<Map<String, Object>> handleMethodNotSupported(org.springframework.web.HttpRequestMethodNotSupportedException ex) {
+        log.warn("Método HTTP no soportado: {}", ex.getMethod());
+        return buildResponse(HttpStatus.METHOD_NOT_ALLOWED, "El método HTTP " + ex.getMethod() + " no está soportado en esta ruta", null);
     }
 
     @ExceptionHandler(Exception.class)

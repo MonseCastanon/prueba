@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -17,6 +18,9 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 public class ClientePatchRequest {
+
+    @NotNull(message = "El ID del cliente es obligatorio")
+    private Long id;
 
     @Pattern(regexp = "^[a-zA-ZáéíóúÁÉÍÓÚñÑ]+( [a-zA-ZáéíóúÁÉÍÓÚñÑ]+)*$")
     @Size(min = 2, max = 50)

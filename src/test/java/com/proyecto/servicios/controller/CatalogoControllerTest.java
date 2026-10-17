@@ -1,5 +1,7 @@
 package com.proyecto.servicios.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.proyecto.servicios.model.CatalogoMunicipioFiltroRequest;
 import com.proyecto.servicios.model.dto.EstadoDto;
 import com.proyecto.servicios.model.dto.EstadoMunicipiosDto;
 import com.proyecto.servicios.service.CatalogoService;
@@ -21,12 +23,15 @@ import java.util.Map;
 
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @ExtendWith(MockitoExtension.class)
 class CatalogoControllerTest {
 
     private MockMvc mockMvc;
+
+    private ObjectMapper objectMapper;
 
     @Mock
     private CatalogoService catalogoService;
@@ -37,10 +42,11 @@ class CatalogoControllerTest {
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.standaloneSetup(catalogoController).build();
+        objectMapper = new ObjectMapper();
     }
 
     @Test
-    @DisplayName("GET /catalogos/estados debe devolver 200 OK y la lista de estados")
+    @DisplayName("GET /catalogos/estados debe devolver 200 OK y la lista de estados en estructura ApiResponse")
     void testConsultarEstadosMexico() throws Exception {
         List<EstadoDto> estados = Arrays.asList(
                 new EstadoDto("09", "CDMX", "CIUDAD DE MÉXICO"),
@@ -50,13 +56,14 @@ class CatalogoControllerTest {
 
         mockMvc.perform(get("/catalogos/estados").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].cve_ent").value("09"))
-                .andExpect(jsonPath("$[0].clave").value("CDMX"))
-                .andExpect(jsonPath("$[0].nombre").value("CIUDAD DE MÉXICO"));
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.datos[0].cve_ent").value("09"))
+                .andExpect(jsonPath("$.datos[0].clave").value("CDMX"))
+                .andExpect(jsonPath("$.datos[0].nombre").value("CIUDAD DE MÉXICO"));
     }
 
     @Test
-    @DisplayName("GET /catalogos/municipios debe devolver 200 OK y todos los municipios")
+    @DisplayName("GET /catalogos/municipios debe devolver 200 OK y todos los municipios en estructura ApiResponse")
     void testConsultarTodosLosMunicipios() throws Exception {
         Map<String, List<String>> municipios = new HashMap<>();
         municipios.put("Jalisco", List.of("Guadalajara", "Zapopan"));
@@ -64,11 +71,12 @@ class CatalogoControllerTest {
 
         mockMvc.perform(get("/catalogos/municipios").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.Jalisco[0]").value("Guadalajara"));
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.datos.Jalisco[0]").value("Guadalajara"));
     }
 
     @Test
-    @DisplayName("GET /catalogos/estados/{estado}/municipios debe devolver 200 OK y municipios del estado")
+    @DisplayName("POST /catalogos/estados/municipios vía RequestBody debe devolver 200 OK sin PathVariable")
     void testConsultarMunicipiosPorEstado() throws Exception {
         EstadoMunicipiosDto dto = EstadoMunicipiosDto.builder()
                 .estado("Jalisco")
@@ -77,10 +85,18 @@ class CatalogoControllerTest {
                 .build();
         when(catalogoService.obtenerMunicipiosPorEstado("Jalisco")).thenReturn(dto);
 
-        mockMvc.perform(get("/catalogos/estados/Jalisco/municipios").accept(MediaType.APPLICATION_JSON))
+        CatalogoMunicipioFiltroRequest request = CatalogoMunicipioFiltroRequest.builder()
+                .estado("Jalisco")
+                .build();
+
+        mockMvc.perform(post("/catalogos/estados/municipios")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request))
+                        .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.estado").value("Jalisco"))
-                .andExpect(jsonPath("$.totalMunicipios").value(2))
-                .andExpect(jsonPath("$.municipios[0]").value("Guadalajara"));
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.datos.estado").value("Jalisco"))
+                .andExpect(jsonPath("$.datos.totalMunicipios").value(2))
+                .andExpect(jsonPath("$.datos.municipios[0]").value("Guadalajara"));
     }
 }
