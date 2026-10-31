@@ -30,6 +30,7 @@ public interface TransaccionRepository extends JpaRepository<Transaccion, UUID> 
     );
 
     @Modifying
+    @org.springframework.transaction.annotation.Transactional
     @Query("UPDATE Transaccion t SET t.estado = com.proyecto.servicios.enums.EstadoTransaccion.REVISION_MANUAL, t.fechaResolucion = CURRENT_TIMESTAMP WHERE t.estado IN ('ENVIADA', 'INCIERTA') AND t.fechaEnvio < :limite")
     int expirarTransaccionesMayoresA24Horas(@Param("limite") OffsetDateTime limite);
 
