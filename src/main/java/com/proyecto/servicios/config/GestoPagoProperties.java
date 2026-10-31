@@ -1,6 +1,5 @@
 package com.proyecto.servicios.config;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
@@ -10,7 +9,8 @@ import java.time.Duration;
 @Validated
 @ConfigurationProperties(prefix = "gestopago")
 public record GestoPagoProperties(
-        @NotBlank String apiBaseUrl,
+        Api api,
+        String apiBaseUrl,
         @NotNull Auth auth,
         Crypto crypto,
         String unidad,
@@ -18,6 +18,13 @@ public record GestoPagoProperties(
         Timeouts timeouts
 ) {
     public GestoPagoProperties {
+        if (apiBaseUrl == null || apiBaseUrl.isBlank()) {
+            if (api != null && api.baseUrl() != null && !api.baseUrl().isBlank()) {
+                apiBaseUrl = api.baseUrl();
+            } else {
+                apiBaseUrl = "https://gestopago.portalventas.net";
+            }
+        }
         if (unidad == null || unidad.isBlank()) {
             unidad = "083";
         }
@@ -34,11 +41,25 @@ public record GestoPagoProperties(
         }
     }
 
+    public record Api(
+            String baseUrl,
+            String apiKey
+    ) {}
+
     public record Auth(
             @NotNull Integer idDistribuidor,
-            @NotBlank String codigoDispositivo,
-            @NotBlank String password
+            String codigoDispositivo,
+            String password
     ) {
+        public Auth {
+            if (codigoDispositivo == null || codigoDispositivo.isBlank()) {
+                codigoDispositivo = "GPS83-TPV-17";
+            }
+            if (password == null || password.isBlank()) {
+                password = "defaultPassword123";
+            }
+        }
+
         @Override
         public String toString() {
             return "Auth[idDistribuidor=" + idDistribuidor + ", codigoDispositivo=" + codigoDispositivo + ", password=***]";
@@ -68,4 +89,3 @@ public record GestoPagoProperties(
             Duration read
     ) {}
 }
-
