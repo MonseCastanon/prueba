@@ -6,6 +6,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.info.BuildProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import com.proyecto.servicios.config.GestoPagoProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.ApplicationContext;
@@ -18,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 @EnableScheduling
 @EnableFeignClients
 @EnableCaching
+@EnableConfigurationProperties(GestoPagoProperties.class)
 public class App implements CommandLineRunner {
 
     private static final Logger log = LoggerFactory.getLogger(App.class);

@@ -42,4 +42,8 @@ public class UsuarioRegistroRequest {
     @NotNull(message = "El ID del cliente asociado es obligatorio")
     @Schema(description = "Identificador del cliente físico al cual se vincula la cuenta de acceso", example = "1001", requiredMode = Schema.RequiredMode.REQUIRED)
     private Long clienteId;
+
+    @Pattern(regexp = "^\\d{4,6}$", message = "El PIN transaccional debe contener entre 4 y 6 dígitos numéricos")
+    @Schema(description = "PIN transaccional opcional de 4 a 6 dígitos", example = "4829")
+    private String pin;
 }

@@ -3,7 +3,6 @@ package com.proyecto.servicios.config.security;
 import com.proyecto.servicios.entity.sf.Usuario;
 import com.proyecto.servicios.repositorys.sf.UsuarioRepository;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -30,14 +29,16 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         boolean habilitado = Boolean.TRUE.equals(usuario.getActivo()) &&
                 (usuario.getCliente() == null || Boolean.TRUE.equals(usuario.getCliente().getActivo()));
 
-        return new User(
+        Long clienteId = usuario.getCliente() != null ? usuario.getCliente().getId() : null;
+
+        return new AuthenticatedUser(
+                usuario.getId(),
+                clienteId,
                 usuario.getCorreo(),
                 usuario.getPasswordHash(),
-                habilitado,
-                true,
-                true,
-                true,
-                Collections.singletonList(new SimpleGrantedAuthority(usuario.getRol()))
+                usuario.getRol(),
+                Collections.singletonList(new SimpleGrantedAuthority(usuario.getRol())),
+                habilitado
         );
     }
 }

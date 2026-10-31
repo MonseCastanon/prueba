@@ -124,6 +124,10 @@ public class ClienteServiceImpl implements ClienteService {
         Usuario usuario = Usuario.builder()
                 .correo(cliente.getCorreo())
                 .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .pinHash(request.getPin() != null && !request.getPin().isBlank()
+                        ? passwordEncoder.encode(request.getPin().trim())
+                        : null)
+                .pinIntentosFallidos((short) 0)
                 .activo(true)
                 .rol("ROLE_CLIENTE")
                 .build();

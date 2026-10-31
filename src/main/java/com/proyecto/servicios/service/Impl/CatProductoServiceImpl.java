@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class CatProductoServiceImpl implements CatProductoService {
@@ -54,15 +56,8 @@ public class CatProductoServiceImpl implements CatProductoService {
         try {
             List<CatProductoDocument> lista = mongoRepository.findByActivoTrue();
 
-            // Si está vacío, intentar sincronizar inicialmente desde GestoPago
             if (lista == null || lista.isEmpty()) {
-                log.info("[CONSULTA] MongoDB no contiene productos aún. Ejecutando sincronización inicial con PuntoRed...");
-                sincronizarCatalogoDesdeGp();
-                lista = mongoRepository.findByActivoTrue();
-            }
-
-            if (lista == null || lista.isEmpty()) {
-                log.warn("[CONSULTA] No se encontraron productos en el catálogo tras la sincronización");
+                log.warn("[CONSULTA] No se encontraron productos activos en el catálogo local de MongoDB");
                 return CatProductoResponse.error(CatProductoRespuestaEnum.CATALOGO_NO_ENCONTRADO);
             }
 
@@ -103,8 +98,27 @@ public class CatProductoServiceImpl implements CatProductoService {
                 return;
             }
 
-            // 4. Mapear y guardar en MongoDB
+            // 4. Mapear productos vigentes del XML y desactivar los que hayan salido del catálogo
             LocalDateTime now = LocalDateTime.now();
+            Set<Integer> idsVigentes = xmlDto.getProductos().stream()
+                    .map(item -> item.getIdProducto())
+                    .collect(Collectors.toSet());
+
+            List<CatProductoDocument> existentesActivos = mongoRepository.findByActivoTrue();
+            if (existentesActivos != null && !existentesActivos.isEmpty()) {
+                List<CatProductoDocument> dadosDeBaja = existentesActivos.stream()
+                        .filter(doc -> doc.getIdProducto() != null && !idsVigentes.contains(doc.getIdProducto()))
+                        .peek(doc -> {
+                            doc.setActivo(false);
+                            doc.setFechaActualizacion(now);
+                        })
+                        .toList();
+                if (!dadosDeBaja.isEmpty()) {
+                    mongoRepository.saveAll(dadosDeBaja);
+                    log.info("[SINCRONIZACIÓN] Se desactivaron {} productos ausentes del nuevo catálogo XML", dadosDeBaja.size());
+                }
+            }
+
             List<CatProductoDocument> documentos = xmlDto.getProductos().stream()
                     .map(item -> CatProductoDocument.builder()
                             .id(String.valueOf(item.getIdProducto()))
