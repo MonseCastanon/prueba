@@ -117,6 +117,10 @@ public class ClienteRegistroRequest {
     @Schema(example = "SeguroPass2026*")
     private String password;
 
+    @Pattern(regexp = "^\\d{4,6}$", message = "El PIN transaccional debe contener entre 4 y 6 dígitos numéricos")
+    @Schema(description = "PIN transaccional opcional de 4 a 6 dígitos", example = "4829")
+    private String pin;
+
     // --- Datos Biométricos Opcionales ---
     @Schema(description = "Fotografía selfie en Base64")
     private String fotoRostroBase64;

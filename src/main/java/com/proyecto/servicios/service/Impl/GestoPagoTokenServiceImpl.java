@@ -6,6 +6,7 @@ import com.proyecto.servicios.mapper.GestoPagoTokenMapper;
 import com.proyecto.servicios.model.gestopago.GestoPagoAuthResponse;
 import com.proyecto.servicios.repositorys.gestopago.GestoPagoTokenRepository;
 import com.proyecto.servicios.service.GestoPagoTokenService;
+import com.proyecto.servicios.util.AesPayloadCipher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +25,7 @@ public class GestoPagoTokenServiceImpl implements GestoPagoTokenService {
     private final GestoPagoAuthClient gestoPagoAuthClient;
     private final GestoPagoTokenRepository tokenRepository;
     private final GestoPagoTokenMapper tokenMapper;
+    private final AesPayloadCipher cipher;
 
     @Value("${gestopago.auth.id-distribuidor:83}")
     private Integer idDistribuidor;
@@ -31,19 +33,21 @@ public class GestoPagoTokenServiceImpl implements GestoPagoTokenService {
     @Value("${gestopago.auth.codigo-dispositivo:GPS83-TPV-17}")
     private String codigoDispositivo;
 
-    @Value("${gestopago.auth.password:12345678}")
+    @Value("${gestopago.auth.password}")
     private String password;
 
     public GestoPagoTokenServiceImpl(GestoPagoAuthClient gestoPagoAuthClient,
                                      GestoPagoTokenRepository tokenRepository,
-                                     GestoPagoTokenMapper tokenMapper) {
+                                     GestoPagoTokenMapper tokenMapper,
+                                     AesPayloadCipher cipher) {
         this.gestoPagoAuthClient = gestoPagoAuthClient;
         this.tokenRepository = tokenRepository;
         this.tokenMapper = tokenMapper;
+        this.cipher = cipher;
     }
 
     @Override
-    @Scheduled(fixedRateString = "${gestopago.auth.refresh-rate-ms:3600000}", initialDelay = 0)
+    @Scheduled(fixedRateString = "${gestopago.auth.refresh-rate-ms:82800000}", initialDelayString = "${gestopago.auth.initial-delay-ms:60000}")
     public void renovarToken() {
         log.info("Renovando token GestoPago para distribuidor={}, dispositivo={}", idDistribuidor, codigoDispositivo);
         try {
@@ -73,8 +77,9 @@ public class GestoPagoTokenServiceImpl implements GestoPagoTokenService {
                         return nuevo;
                     });
 
+            tokenEntity.setToken("ENC:" + cipher.cifrarJson(response.getToken()));
             tokenRepository.save(tokenEntity);
-            log.info("Token GestoPago renovado correctamente: {}", tokenEntity.getToken().substring(0, Math.min(20, tokenEntity.getToken().length())) + "...");
+            log.info("Token GestoPago renovado exitosamente para distribuidor={}", idDistribuidor);
 
         } catch (Exception e) {
             log.error("Error al renovar token GestoPago: {}", e.getMessage(), e);
@@ -87,8 +92,21 @@ public class GestoPagoTokenServiceImpl implements GestoPagoTokenService {
         if (tokenOpt.isEmpty() || tokenOpt.get().getToken() == null) {
             log.info("No se encontró token en BD, intentando renovar inmediatamente...");
             renovarToken();
-            return tokenRepository.findByIdDistribuidorAndCodigoDispositivo(idDistribuidor, codigoDispositivo);
+            tokenOpt = tokenRepository.findByIdDistribuidorAndCodigoDispositivo(idDistribuidor, codigoDispositivo);
         }
-        return tokenOpt;
+        return tokenOpt.map(entity -> {
+            if (entity.getToken() != null && entity.getToken().startsWith("ENC:")) {
+                GestoPagoToken copy = new GestoPagoToken();
+                copy.setId(entity.getId());
+                copy.setIdDistribuidor(entity.getIdDistribuidor());
+                copy.setCodigoDispositivo(entity.getCodigoDispositivo());
+                copy.setToken(cipher.descifrarJson(entity.getToken().substring(4)));
+                copy.setActivo(entity.getActivo());
+                copy.setFechaCreacion(entity.getFechaCreacion());
+                copy.setFechaActualizacion(entity.getFechaActualizacion());
+                return copy;
+            }
+            return entity;
+        });
     }
 }

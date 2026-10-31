@@ -153,7 +153,7 @@ public class CuentaServiceImpl implements CuentaService {
         Cuenta cuenta = buscarPorNumero(numeroCuenta);
 
         if (request.getSaldo() != null) {
-            cuenta.setSaldo(request.getSaldo());
+            throw new BusinessRuleException("No está permitido modificar el saldo directamente mediante PATCH. Las modificaciones deben realizarse mediante transacciones bancarias auditadas.");
         }
 
         if (request.getEstatus() != null && request.getEstatus() != cuenta.getEstatus()) {

@@ -32,6 +32,8 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-cache'
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'net.javacrumbs.shedlock:shedlock-spring:5.16.0'
+    implementation 'net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.16.0'
     implementation 'org.springframework.boot:spring-boot-starter-freemarker'
     //Documentation y APIs
 
@@ -84,6 +86,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     testImplementation 'org.mockito:mockito-inline:5.1.1'
     testImplementation 'com.h2database:h2:2.2.220'
+    testImplementation 'org.wiremock:wiremock-standalone:3.9.1'
 
 }
 

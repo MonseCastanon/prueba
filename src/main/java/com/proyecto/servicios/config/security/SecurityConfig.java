@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -41,11 +42,11 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(AbstractHttpConfigurer::disable)
-            .cors(AbstractHttpConfigurer::disable)
+            .cors(Customizer.withDefaults())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .headers(headers -> headers
                 .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
-                .contentTypeOptions(HeadersConfigurer.ContentTypeOptionsConfig::disable)
+                .contentTypeOptions(Customizer.withDefaults())
             )
             .authorizeHttpRequests(auth -> auth
                 // Endpoints Públicos
@@ -53,7 +54,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/clientes").permitAll() // Onboarding inicial
                 .requestMatchers("/catalogos/**").permitAll() // Catálogos públicos
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                 // Endpoints Protegidos
                 .anyRequest().authenticated()
             )

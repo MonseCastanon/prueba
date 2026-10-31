@@ -38,6 +38,16 @@ public class Usuario {
     @Builder.Default
     private String rol = "ROLE_CLIENTE";
 
+    @Column(name = "pin_hash", length = 60)
+    private String pinHash;
+
+    @Column(name = "pin_intentos_fallidos", nullable = false)
+    @Builder.Default
+    private Short pinIntentosFallidos = 0;
+
+    @Column(name = "pin_bloqueado_hasta")
+    private OffsetDateTime pinBloqueadoHasta;
+
     @CreationTimestamp
     @Column(name = "fecha_creacion", nullable = false, updatable = false)
     private OffsetDateTime fechaCreacion;

@@ -12,5 +12,7 @@ public interface CatProductoMongoRepository extends MongoRepository<CatProductoD
 
     Optional<CatProductoDocument> findByIdProducto(Integer idProducto);
 
+    Optional<CatProductoDocument> findByIdProductoAndActivoTrue(Integer idProducto);
+
     List<CatProductoDocument> findByActivoTrue();
 }
